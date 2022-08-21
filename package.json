@@ -1,0 +1,23 @@
+{
+  "name": "Ulak",
+  "version": "0.0.1",
+  "description": "Ulak bug reporter is a web component used to report bugs with console logs and screenshot for production code running on users' browsers",
+  "author": {
+    "name" : "Destan Sarpkaya",
+    "email" : "abone@destan.dev",
+    "url" : "https://destan.dev"
+  },
+  "keywords": ["bug-reporting", "logger", "web-components", "webcomponents", "custom-web-component"],
+  "main": "dist/ulak.js",
+  "scripts": {
+    "build": "./build.js",
+    "dev": "./node_modules/.bin/esbuild src/index.js --format=esm --outfile=dist/ulak.js --bundle --minify --watch --sourcemap"
+  },
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "esbuild": "^0.15.5"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

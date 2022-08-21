@@ -1,0 +1,28 @@
+== Build & Publish the lib
+
+Update version in:
+
+* `version.js`
+* `package.json`
+
+and then run:
+
+```
+yarn build
+```
+
+Then it's at `dist/ulak.js`;
+
+To initialize the lib:
+
+```
+orhun.interceptConsole();
+```
+
+For development:
+
+```
+yarn dev
+```
+
+then serve the `index.html` via a web server.
