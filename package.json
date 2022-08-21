@@ -17,8 +17,5 @@
   "license": "MPL-2.0",
   "devDependencies": {
     "esbuild": "^0.15.5"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
   }
 }
