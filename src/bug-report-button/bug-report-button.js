@@ -21,6 +21,10 @@ export default class BugReportButton extends HTMLElement {
   			  button {
   			    cursor: pointer;
   			  }
+  			  button:disabled {
+  			    pointer-events: none;
+  			    opacity: 0.3;
+  			  }
   			  section {
   			    backdrop-filter: blur(3px);
             bottom: 0;
