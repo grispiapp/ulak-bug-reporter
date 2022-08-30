@@ -1,39 +1,37 @@
-import takeScreenshot from './screenshot.js';
 import {getLogs, STORAGE_KEY} from "./consoleInterceptor";
 import generateFileName from "./generateFileName";
 
 let logsReadyPromise = null;
 let payload = null;
 
-export function preparePayload() {
+export function preparePayload(screenshotBlob, message) {
   // Prepare payload for this page
   logsReadyPromise = new Promise((resolve, reject) => {
 
     const meta = calculateMeta();
     const lStorage = JSON.stringify(localStorage, 0, 2);
-    const sStorage = serializeSessionStorageWithoutOrhunData();
+    const sStorage = serializeSessionStorageWithoutUlakData();
     const cookie = document.cookie;
     const fileName = generateFileName();
+    const logs = getLogs();
 
-    takeScreenshot()
-      .then(function (canvas) {
-        // take SS before calling getLogs() so that we can see SS related errors if any
-        const logs = getLogs();
-        canvas.toBlob(screenshotBlob => {
-          payload = {
-            meta,
-            cookie,
-            lStorage,
-            sStorage,
-            logs,
-            screenshot: screenshotBlob,
-            fileName
-          };
-          resolve(payload);
-        });
-      })
-      .catch(reason => reject(`Cannot take screenshot. Reason: '${reason}'.`));
+    payload = {
+      meta,
+      cookie,
+      lStorage,
+      sStorage,
+      logs,
+      fileName,
+      message
+    };
+
+    if (screenshotBlob) {
+      payload.screenshot = screenshotBlob;
+    }
+
+    resolve(payload);
   });
+  return logsReadyPromise;
 }
 
 export function getPayload() {
@@ -45,7 +43,7 @@ export function getPayload() {
 
 // ==================== PRIVATE FUNCTIONS ====================
 
-function serializeSessionStorageWithoutOrhunData() {
+function serializeSessionStorageWithoutUlakData() {
   const sStorageClone = JSON.parse(JSON.stringify(sessionStorage));
   Object.keys(sessionStorage).filter(key => key.startsWith(STORAGE_KEY)).forEach(key => delete sStorageClone[key]);
   return JSON.stringify(sStorageClone, 0, 2);

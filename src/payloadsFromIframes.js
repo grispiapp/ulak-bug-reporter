@@ -1,19 +1,20 @@
 import {PREPARE_PAYLOAD_REQUEST, RETRIEVE_PAYLOAD_REQUEST} from "./eventNames";
+import isDebugEnabled from "./isDebugEnabled";
 
-const CONSOLE_LABEL = "Orhun";
+const CONSOLE_LABEL = "Ulak";
 const TIMEOUT = 5000;
 let counter = 0;
 let payloads = [];
 
 function payloadRequested() {
   counter += 1;
-  window.orhunDebug && console.debug(CONSOLE_LABEL, 'payloadRequested', counter);
+  isDebugEnabled() && console.debug(CONSOLE_LABEL, 'payloadRequested', counter);
 }
 
 function payloadRetrieved(payload) {
   counter -= 1;
   payloads.push(payload);
-  window.orhunDebug && console.debug(CONSOLE_LABEL, 'payloadRetrieved', counter);
+  isDebugEnabled() && console.debug(CONSOLE_LABEL, 'payloadRetrieved', counter);
 }
 
 function payloadsReadyOrTimeout() {
@@ -30,7 +31,7 @@ function payloadsReadyOrTimeout() {
       const now = new Date().getTime();
       const elapsed = now - requestedAt;
       if (counter === 0 || elapsed > TIMEOUT) {
-        window.orhunDebug && console.debug(CONSOLE_LABEL, 'payloadsReadyOrTimeout', 'counter', counter, 'elapsed', elapsed);
+        isDebugEnabled() && console.debug(CONSOLE_LABEL, 'payloadsReadyOrTimeout', 'counter', counter, 'elapsed', elapsed);
         clearInterval(intervalHandler);
         resolve(payloads);
         payloads = [];

@@ -16,8 +16,10 @@ Then it's at `dist/ulak.js`;
 To initialize the lib:
 
 ```
-orhun.interceptConsole();
+ulak.interceptConsole();
 ```
+
+If you set `window.ulakDebug = true` then Ulak logs its own debug logs with `Ulak` prefix to the console.
 
 For development:
 

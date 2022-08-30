@@ -5,8 +5,9 @@ import downloadFile from "./downloadFile";
 import {IS_SSR} from "./isSSR";
 import {payloadsReadyOrTimeout} from "./payloadsFromIframes";
 import {getPayload} from "./preparePayload";
+import isDebugEnabled from "./isDebugEnabled";
 
-const CONSOLE_LABEL = "Orhun";
+const CONSOLE_LABEL = "Ulak";
 const hostname = IS_SSR ? "SSR" : new URL(location.href).hostname
 
 let API_URL;
@@ -18,8 +19,7 @@ if(hostname.endsWith('grispi.com')){
   API_URL = 'http://localhost:8080';
 }
 
-export default async function send(closeAll, e) {
-  orhunSendBtn.disable();
+export default async function send(doneCallback) {
 
   const payloadsFromIframesPromise = payloadsReadyOrTimeout();
   const payloadPromise = getPayload();
@@ -36,44 +36,40 @@ export default async function send(closeAll, e) {
     body: fd,
     headers: {
       'Authorization': `Bearer ${getToken()}`,
-      'tenantId': window.location.host.split('.')[0]
+      'tenantId': 'dedeler'//FIXME window.location.host.split('.')[0]
     }
   })
     .then(
       function (response) {
-        orhunSendBtn.enable();
         if (response.status !== 200) {
           console.error(CONSOLE_LABEL, 'Error in response. Response:', response);
-          alert(t('sendErrorMessage'));
 
           // This doesn't seem to work correctly on forms that have multiple fields with same name but we don't have such a case
           // https://stackoverflow.com/questions/41431322/how-to-convert-formdata-html5-object-to-json#comment102116212_55874235
           handleForManualSending(fd);
-          closeAll();
+          doneCallback(false, t('sendErrorMessage'));
           return;
         }
 
         response.text().then(function (text) {
           clearLogs();
-          alert(t('successMessage', {TICKET_KEY: text}));
-          closeAll();
+          doneCallback(true, t('successMessage', {TICKET_KEY: text}));
         });
       })
     .catch(function (err) {
-      orhunSendBtn.enable();
       console.error(CONSOLE_LABEL, 'Fetch Error', err);
-      alert(t('sendErrorMessage'));
       handleForManualSending(fd);
-      closeAll();
+      doneCallback(false, t('sendErrorMessage'));
     });
   // end of fetch
 }
 
 function prepareFormData(payload, iframePayloads) {
-  window.orhunDebug && console.debug(CONSOLE_LABEL, 'payload, iframePayloads', payload, iframePayloads);
+  isDebugEnabled() && console.debug(CONSOLE_LABEL, 'payload, iframePayloads', payload, iframePayloads);
 
-  const description = document.getElementById('orhunFeedbackText')?.value;
-  payload.description = description; // So that when offline file download mode the 'description' info is not lost
+  const description = payload.message;
+  // We will keep the message in payload object as well so that in offline file download mode
+  // the 'description' info is not lost
 
   const fd = new FormData();
   fd.append('description', description);

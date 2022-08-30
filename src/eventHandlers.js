@@ -1,16 +1,31 @@
 import {IS_SSR} from "./isSSR";
 import {PREPARE_PAYLOAD_REQUEST, RETRIEVE_PAYLOAD_REQUEST, RETRIEVE_PAYLOAD_RESPONSE} from "./eventNames";
 import {preparePayload, getPayload} from "./preparePayload";
-import {payloadRetrieved} from "./payloadsFromIframes";
+import {payloadRetrieved, preparePayloadForIframes} from "./payloadsFromIframes";
 import isDebugEnabled from "./isDebugEnabled";
 import BugReportButton from "./bug-report-button/bug-report-button";
+import send from "./logSender";
 
-const CONSOLE_LABEL = "Orhun";
+const CONSOLE_LABEL = "Ulak";
+
+function sendDoneCallback(success, message) {
+	alert(`Success ${success} message: ${message}`);
+	window.dispatchEvent(new CustomEvent(BugReportButton.SENDING_DONE_EVENT_NAME, {detail: {success, message}}));
+}
 
 export default function registerEventHandlers() {
 	if (IS_SSR) {
 		return;
 	}
+
+	window.addEventListener(BugReportButton.SEND_EVENT_NAME, evt => {
+
+		preparePayloadForIframes();
+		preparePayload(evt.detail.screenshot, evt.detail.message)
+			.then(() => {
+				send(sendDoneCallback);
+			});
+	});
 
 	isDebugEnabled() && console.debug(CONSOLE_LABEL, 'Registering message handler.');
 	window.addEventListener("message", async (e) => {

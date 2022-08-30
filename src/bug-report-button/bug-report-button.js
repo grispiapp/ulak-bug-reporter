@@ -118,7 +118,7 @@ export default class BugReportButton extends HTMLElement {
             <div>
                 <img id="preview" src="" alt="Screenshot preview"/>
                 <em id="captureErrorMsg"></em>
-                <textarea rows="5" placeholder="${textareaPlaceholderText}"></textarea>
+                <textarea id="message" rows="5" placeholder="${textareaPlaceholderText}"></textarea>
                 <div style=" text-align: center; ">
                   <button id="cancelBtn">${cancelText}</button>
                   <button id="sendBtn" style=" font-weight: bold; ">${sendButtonText}</button>
@@ -163,7 +163,7 @@ export default class BugReportButton extends HTMLElement {
     shadowDom.getElementById('cancelBtn').onclick = closePopupFn;
 
     this.#sendBtn.onclick = this.#send.bind(this);
-    window.document.addEventListener(BugReportButton.SENDING_DONE_EVENT_NAME, this.#sendingDone.bind(this));
+    window.addEventListener(BugReportButton.SENDING_DONE_EVENT_NAME, this.#sendingDone.bind(this));
   }
 
   #clickCallback() {
@@ -207,7 +207,7 @@ export default class BugReportButton extends HTMLElement {
       screenshot: this.#screenshotAsBlob,
       message: this.#textarea.value
     };
-    window.document.dispatchEvent(new CustomEvent(BugReportButton.SEND_EVENT_NAME, {detail: payload}));
+    window.dispatchEvent(new CustomEvent(BugReportButton.SEND_EVENT_NAME, {detail: payload}));
     this.#startLoading();
   }
 
@@ -223,7 +223,7 @@ export default class BugReportButton extends HTMLElement {
 
     if (this.#sendTimeout > 0) {
       this.#sendTimeoutHandle = setTimeout(() => {
-        document.dispatchEvent(new CustomEvent(BugReportButton.SENDING_DONE_EVENT_NAME, {detail: {message: timeoutErrorMessage}}))
+        window.dispatchEvent(new CustomEvent(BugReportButton.SENDING_DONE_EVENT_NAME, {detail: {message: timeoutErrorMessage}}))
       }, this.#sendTimeout);
     }
   }
@@ -231,9 +231,6 @@ export default class BugReportButton extends HTMLElement {
   #endLoading(message, success, keepPopupOpenOnSuccess) {
     this.shadowRoot.querySelectorAll('button, textarea').forEach(el => el.disabled = false);
     this.#sendBtn.innerText = sendButtonText;
-
-    const prefix = success ? '' : `[${errorText}]: `;
-    alert(prefix + message);
 
     if (success === true && keepPopupOpenOnSuccess !== true) {
       this.#hidePopup();
