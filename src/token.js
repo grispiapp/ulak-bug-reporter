@@ -1,6 +1,6 @@
 import {IS_ON_BROWSER} from "./isSSR";
 import t from "./translations";
-import {AUTH_TOKEN_READY} from "./eventNames";
+import {AUTH_TOKEN_READY_EVENT_NAME} from "./eventNames";
 
 let token = null;
 
@@ -12,7 +12,7 @@ export default function getToken() {
 }
 
 if (IS_ON_BROWSER) {
-	window.addEventListener(AUTH_TOKEN_READY, e => {
+	window.addEventListener(AUTH_TOKEN_READY_EVENT_NAME, e => {
 		token = e.detail;
 	});
 }
