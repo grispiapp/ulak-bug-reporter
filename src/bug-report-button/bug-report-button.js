@@ -1,22 +1,25 @@
 import ScreenshotButton from "../screenshot-button/screenshot-button";
 
-const textareaPlaceholderText = '(Optional) Message or bug description';
-const sendButtonText = 'Send';
-const sendButtonLoadingText = 'Sending...';
-const cancelText = 'Cancel';
-const errorText = 'Error';
-const timeoutErrorMessage = '(TIMEOUT) Sending might not be successful, time out occurred!';
+let exportedClass;
 
-const sendTimeoutDefault = '10000';
-const noPermitScreenCaptureImgUrl = 'https://i.imgur.com/MXRT775.png';
+if (typeof window !== "undefined") {
+  const textareaPlaceholderText = '(Optional) Message or bug description';
+  const sendButtonText = 'Send';
+  const sendButtonLoadingText = 'Sending...';
+  const cancelText = 'Cancel';
+  const errorText = 'Error';
+  const timeoutErrorMessage = '(TIMEOUT) Sending might not be successful, time out occurred!';
 
-export default class BugReportButton extends HTMLElement {
+  const sendTimeoutDefault = '10000';
+  const noPermitScreenCaptureImgUrl = 'https://i.imgur.com/MXRT775.png';
 
-  static SEND_EVENT_NAME = 'BugReportButton:Send'
+  class BugReportButton extends window.HTMLElement {
 
-  static SENDING_DONE_EVENT_NAME = 'BugReportButton:SendingDone'
+    static SEND_EVENT_NAME = 'BugReportButton:Send'
 
-  static #htmlContent = `
+    static SENDING_DONE_EVENT_NAME = 'BugReportButton:SendingDone'
+
+    static #htmlContent = `
   			<style>
   			  button {
   			    cursor: pointer;
@@ -128,115 +131,127 @@ export default class BugReportButton extends HTMLElement {
         </section>
       `;
 
-  #screenshotButton;
-  #previewImg;
-  #captureErrorMsg;
-  #popup;
-  #screenshotAsBlob;
-  #textarea;
-  #sendBtn;
-  #sendTimeout;
-  #sendTimeoutHandle;
+    #screenshotButton;
+    #previewImg;
+    #captureErrorMsg;
+    #popup;
+    #screenshotAsBlob;
+    #textarea;
+    #sendBtn;
+    #sendTimeout;
+    #sendTimeoutHandle;
 
-  constructor() {
-    super();
+    constructor() {
+      super();
 
-    const text = this.attributes.getNamedItem('text')?.value || 'Bug Report';
-    this.#sendTimeout = this.attributes.getNamedItem('send-timeout')?.value || sendTimeoutDefault;
+      const text = this.attributes.getNamedItem('text')?.value || 'Bug Report';
+      this.#sendTimeout = this.attributes.getNamedItem('send-timeout')?.value || sendTimeoutDefault;
 
-    const shadowDom = this.attachShadow({
-      mode: 'open'
-    });
-    shadowDom.innerHTML = BugReportButton.#htmlContent;
-    const button = shadowDom.getElementById('actionBtn');
-    button.innerText = text;
-    button.onclick = this.#clickCallback.bind(this);
-
-    this.#screenshotButton = shadowDom.querySelector('screenshot-button');
-    this.#previewImg = shadowDom.getElementById('preview');
-    this.#captureErrorMsg = shadowDom.getElementById('captureErrorMsg');
-    this.#popup = shadowDom.getElementById('popup');
-    this.#sendBtn = shadowDom.getElementById('sendBtn');
-    this.#textarea = shadowDom.querySelector('textarea');
-    const closePopupFn = this.#hidePopup.bind(this);
-    shadowDom.getElementById('closeBtn').onclick = closePopupFn;
-    shadowDom.getElementById('cancelBtn').onclick = closePopupFn;
-
-    this.#sendBtn.onclick = this.#send.bind(this);
-    window.addEventListener(BugReportButton.SENDING_DONE_EVENT_NAME, this.#sendingDone.bind(this));
-  }
-
-  #clickCallback() {
-    this.#screenshotButton
-      .takeScreenshot()
-      .then(blob => {
-        this.#showPopup(blob);
-        this.#screenshotAsBlob = blob;
-      })
-      .catch(e => {
-        this.#showPopup(null, e);
+      const shadowDom = this.attachShadow({
+        mode: 'open'
       });
-  }
+      shadowDom.innerHTML = BugReportButton.#htmlContent;
+      const button = shadowDom.getElementById('actionBtn');
+      button.innerText = text;
+      button.onclick = this.#clickCallback.bind(this);
 
-  #showPopup(blob, error) {
-    const imgEl = this.#previewImg;
-    imgEl.removeAttribute('width');
-    imgEl.onload = null;
+      this.#screenshotButton = shadowDom.querySelector('screenshot-button');
+      this.#previewImg = shadowDom.getElementById('preview');
+      this.#captureErrorMsg = shadowDom.getElementById('captureErrorMsg');
+      this.#popup = shadowDom.getElementById('popup');
+      this.#sendBtn = shadowDom.getElementById('sendBtn');
+      this.#textarea = shadowDom.querySelector('textarea');
+      const closePopupFn = this.#hidePopup.bind(this);
+      shadowDom.getElementById('closeBtn').onclick = closePopupFn;
+      shadowDom.getElementById('cancelBtn').onclick = closePopupFn;
 
-    if (blob) {
-      imgEl.src = URL.createObjectURL(blob);
-      imgEl.onload = () => {
-        imgEl.width = imgEl.width * 0.4;
+      this.#sendBtn.onclick = this.#send.bind(this);
+      window.addEventListener(BugReportButton.SENDING_DONE_EVENT_NAME, this.#sendingDone.bind(this));
+    }
+
+    #clickCallback() {
+      this.#screenshotButton
+        .takeScreenshot()
+        .then(blob => {
+          this.#showPopup(blob);
+          this.#screenshotAsBlob = blob;
+        })
+        .catch(e => {
+          this.#showPopup(null, e);
+        });
+    }
+
+    #showPopup(blob, error) {
+      const imgEl = this.#previewImg;
+      imgEl.removeAttribute('width');
+      imgEl.onload = null;
+
+      if (blob) {
+        imgEl.src = URL.createObjectURL(blob);
+        imgEl.onload = () => {
+          imgEl.width = imgEl.width * 0.4;
+        };
+      } else {
+        imgEl.src = noPermitScreenCaptureImgUrl;
+        this.#captureErrorMsg.innerText = `${errorText}: ${error}`;
+      }
+
+      this.#popup.style.display = 'block';
+    }
+
+    #hidePopup() {
+      this.#popup.style.display = 'none';
+      this.#captureErrorMsg.innerText = '';
+      this.#screenshotAsBlob = null;
+    }
+
+    #send() {
+      const payload = {
+        screenshot: this.#screenshotAsBlob,
+        message: this.#textarea.value
       };
-    } else {
-      imgEl.src = noPermitScreenCaptureImgUrl;
-      this.#captureErrorMsg.innerText = `${errorText}: ${error}`;
+      window.dispatchEvent(new CustomEvent(BugReportButton.SEND_EVENT_NAME, {detail: payload}));
+      this.#startLoading();
     }
 
-    this.#popup.style.display = 'block';
-  }
-
-  #hidePopup() {
-    this.#popup.style.display = 'none';
-    this.#captureErrorMsg.innerText = '';
-    this.#screenshotAsBlob = null;
-  }
-
-  #send() {
-    const payload = {
-      screenshot: this.#screenshotAsBlob,
-      message: this.#textarea.value
-    };
-    window.dispatchEvent(new CustomEvent(BugReportButton.SEND_EVENT_NAME, {detail: payload}));
-    this.#startLoading();
-  }
-
-  #sendingDone(e) {
-    clearTimeout(this.#sendTimeoutHandle);
-    const eventDetail = e.detail;
-    this.#endLoading(eventDetail?.message, eventDetail?.success, eventDetail?.keepPopupOpenOnSuccess);
-  }
-
-  #startLoading() {
-    this.#sendBtn.innerText = sendButtonLoadingText;
-    this.shadowRoot.querySelectorAll('button, textarea').forEach(el => el.disabled = true);
-
-    if (this.#sendTimeout > 0) {
-      this.#sendTimeoutHandle = setTimeout(() => {
-        window.dispatchEvent(new CustomEvent(BugReportButton.SENDING_DONE_EVENT_NAME, {detail: {message: timeoutErrorMessage}}))
-      }, this.#sendTimeout);
+    #sendingDone(e) {
+      clearTimeout(this.#sendTimeoutHandle);
+      const eventDetail = e.detail;
+      this.#endLoading(eventDetail?.message, eventDetail?.success, eventDetail?.keepPopupOpenOnSuccess);
     }
-  }
 
-  #endLoading(message, success, keepPopupOpenOnSuccess) {
-    this.shadowRoot.querySelectorAll('button, textarea').forEach(el => el.disabled = false);
-    this.#sendBtn.innerText = sendButtonText;
+    #startLoading() {
+      this.#sendBtn.innerText = sendButtonLoadingText;
+      this.shadowRoot.querySelectorAll('button, textarea').forEach(el => el.disabled = true);
 
-    if (success === true && keepPopupOpenOnSuccess !== true) {
-      this.#hidePopup();
+      if (this.#sendTimeout > 0) {
+        this.#sendTimeoutHandle = setTimeout(() => {
+          window.dispatchEvent(new CustomEvent(BugReportButton.SENDING_DONE_EVENT_NAME, {detail: {message: timeoutErrorMessage}}))
+        }, this.#sendTimeout);
+      }
     }
+
+    #endLoading(message, success, keepPopupOpenOnSuccess) {
+      this.shadowRoot.querySelectorAll('button, textarea').forEach(el => el.disabled = false);
+      this.#sendBtn.innerText = sendButtonText;
+
+      if (success === true && keepPopupOpenOnSuccess !== true) {
+        this.#hidePopup();
+      }
+    }
+
   }
 
+  window.customElements.define('bug-report-button', BugReportButton);
+  exportedClass = BugReportButton;
+} else {
+  class BugReportButton {
+
+    static SEND_EVENT_NAME = 'BugReportButton:Send'
+
+    static SENDING_DONE_EVENT_NAME = 'BugReportButton:SendingDone'
+  }
+  exportedClass = BugReportButton;
 }
 
-window.customElements.define('bug-report-button', BugReportButton);
+export default exportedClass;

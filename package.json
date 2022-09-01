@@ -1,6 +1,6 @@
 {
   "name": "ulak",
-  "version": "0.0.3",
+  "version": "0.0.11",
   "description": "Ulak bug reporter is a web component used to report bugs with console logs and screenshot for production code running on users' browsers",
   "author": {
     "name" : "Destan Sarpkaya",

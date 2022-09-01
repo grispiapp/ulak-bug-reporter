@@ -1,30 +1,32 @@
-== Build & Publish the lib
+# Usage
 
-Update version in:
+In a plain web page:
 
-* `version.js`
-* `package.json`
-
-and then run:
-
-```
-yarn build
+```html
+<script type="module">
+  import { interceptConsole } from './dist/ulak.js';
+  interceptConsole();
+</script>
 ```
 
-Then it's at `dist/ulak.js`;
+In a project where a bundler is present:
 
-To initialize the lib:
+add `ulak` to `package.json`
 
+```json
+{
+  "dependencies": {
+    "ulak": "x.y.z"
+  }
+}
 ```
-ulak.interceptConsole();
+then:
+```javascript
+import { interceptConsole } from 'ulak';
+
+interceptConsole();
 ```
 
-If you set `window.ulakDebug = true` then Ulak logs its own debug logs with `Ulak` prefix to the console.
+In both cases you need the following HTML tag in your page:
 
-For development:
-
-```
-yarn dev
-```
-
-then serve the `index.html` via a web server.
+`<bug-report-button text="Hata Bildir"></bug-report-button>`
