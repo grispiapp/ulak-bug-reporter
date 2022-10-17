@@ -9,7 +9,6 @@ import send from "./logSender";
 const CONSOLE_LABEL = "Ulak";
 
 function sendDoneCallback(success, message) {
-	alert(`Success ${success} message: ${message}`);
 	window.dispatchEvent(new CustomEvent(BugReportButton.SENDING_DONE_EVENT_NAME, {detail: {success, message}}));
 }
 

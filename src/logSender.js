@@ -36,7 +36,7 @@ export default async function send(doneCallback) {
     body: fd,
     headers: {
       'Authorization': `Bearer ${getToken()}`,
-      'tenantId': 'dedeler'//FIXME window.location.host.split('.')[0]
+      'tenantId': window.location.host.split('.')[0]
     }
   })
     .then(

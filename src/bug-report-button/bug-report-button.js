@@ -177,6 +177,7 @@ if (typeof window !== "undefined") {
           this.#screenshotAsBlob = blob;
         })
         .catch(e => {
+          console.error('bug-report-button:', e);
           this.#showPopup(null, e);
         });
     }
