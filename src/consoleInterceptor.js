@@ -1,10 +1,8 @@
 import {LONG_VERSION} from './version';
 import {IS_SSR, IS_ON_BROWSER} from "./isSSR";
 import registerEventHandlers from "./eventHandlers";
+import {CONSOLE_LABEL} from "./config";
 
-export const STORAGE_KEY = "UlakLog";
-const STRING_STORAGE_THRESHOLD = 200_000; //Don't let this to be customized
-const CONSOLE_LABEL = "Ulak";
 const NOOP = function(){}
 
 const LOG_TYPE = {
@@ -27,12 +25,6 @@ const startTime = Date.now();
 
 let allLogs = "";
 let consoleIntercepted = false;
-let quotaExceeded = false;
-let storageKeyIndex = 0;
-
-// When quotaExceeded, then we start to overwrite old sessionStorage buckets. In that case storageKeyIndex won't show
-//the latest index.
-let storageMaxKeyIndex = 0;
 
 registerEventHandlers();
 
@@ -72,46 +64,12 @@ function parseLog(args, logType) {
       s.push(`[Unrecognized type ${a}]`)
     }
   }
-
+  //TODO xxx add file name and line number https://github.com/stacktracejs/stacktrace.js
   return s.join(' ');
 }
 
 function persist(log) {
-
   allLogs += "\n" + log;
-
-  if (allLogs.length < STRING_STORAGE_THRESHOLD) return;
-
-  try {
-    const currentStorageKey = STORAGE_KEY + (storageKeyIndex++);
-    storageMaxKeyIndex = Math.max(storageMaxKeyIndex, storageKeyIndex);
-    infoOriginal(CONSOLE_LABEL, 'writing to storage', currentStorageKey);
-
-    // There will be some log loss but this trimming will increase the chances of successful write w/o another quotaExceeded exception
-    sessionStorage.setItem(currentStorageKey, allLogs.substring(allLogs.length - STRING_STORAGE_THRESHOLD));
-    allLogs = "";
-    infoOriginal(CONSOLE_LABEL, 'written to storage', currentStorageKey);
-  }
-  catch(e) {
-    quotaExceeded = true;
-
-    // currentStorageKeyIsUsed would be true when quotaExceeded before and we started to overwrite session storage buckets
-    // Say there's already UlakLog0, UlakLog1 then when trying to create UlakLog3 we got quotaExceeded exception.
-    //Then we clear UlakLog0, set storageKeyIndex=0 and move on. After a while we try to write to UlakLog1 and get an exception.
-    //In that case we shouldn't clear UlakLog0 but we should clear UlakLog1 and write to it.
-    //UlakLog1 was used before we got the first quotaExceeded exception hence it's not empty. Hence, we don't change storageKeyIndex
-    // which is currently 1 so we clear UlakLog1 and write to it (in the next log).
-    const currentStorageKeyIsUsed = !!sessionStorage.getItem(STORAGE_KEY + storageKeyIndex);
-    if (!currentStorageKeyIsUsed) {
-      storageKeyIndex = 0;
-    }
-
-    sessionStorage.removeItem(STORAGE_KEY + storageKeyIndex);
-
-    console.error(`Session storage is full. e.code '${e.code}' e.name ${e.name}`);
-    // We expect => e.code == 22 && e.name == 'QuotaExceededError'
-    // https://developer.mozilla.org/en-US/docs/Web/API/DOMException#error_names
-  }
 }
 
 function _log(args, logType) {
@@ -119,55 +77,45 @@ function _log(args, logType) {
   persist(log);
 }
 
-export function log() {
+function log() {
   _log(arguments, LOG_TYPE.log)
 }
 
-export function trace() {
+function trace() {
   // TODO get the actual stack https://stackoverflow.com/a/6715624/878361
   _log(arguments, LOG_TYPE.trace)
 }
 
-export function debug() {
+function debug() {
   _log(arguments, LOG_TYPE.debug)
 }
 
-export function info() {
+function info() {
   _log(arguments, LOG_TYPE.info)
 }
 
-export function warn() {
+function warn() {
   _log(arguments, LOG_TYPE.warn)
 }
 
-export function error() {
+function error() {
   _log(arguments, LOG_TYPE.error)
 }
 
 export function getLogs() {
-  const allLogsFromStorage = [];
-  for (let i = 0; i < storageMaxKeyIndex; i++) {
-    const logsFromStorage = sessionStorage.getItem(STORAGE_KEY + i);
-    if (logsFromStorage) {
-      allLogsFromStorage.push(logsFromStorage);
-    }
-  }
-  const quotaMessage = quotaExceeded ? `[Session storage quota exceeded, logs may be not ordered by time!]\n` : '';
   const startTimeMessage = `\nStart time: ${startTime}\n`;
-  return LONG_VERSION + startTimeMessage + quotaMessage + allLogsFromStorage.join('') + allLogs;
+  return LONG_VERSION + startTimeMessage + allLogs;
 }
 
 export function clearLogs() {
   allLogs = "";
-  for (let i = 0; i < storageMaxKeyIndex; i++) {
-    sessionStorage.removeItem(STORAGE_KEY + i);
-  }
-  storageKeyIndex = 0;
-  storageMaxKeyIndex = 0;
-  quotaExceeded = false;
 }
 
 export function interceptConsole() {
+  if (!IS_ON_BROWSER) {
+    console.debug(CONSOLE_LABEL, 'Not on browser, ignoring...');
+    return;
+  }
   if (!consoleIntercepted && IS_ON_BROWSER) {
 
     // console.log

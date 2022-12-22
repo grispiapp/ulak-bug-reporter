@@ -1,14 +1,20 @@
 {
   "name": "ulak",
-  "version": "0.0.13",
+  "version": "0.1.0",
   "description": "Ulak bug reporter is a web component used to report bugs with console logs and screenshot for production code running on users' browsers",
   "author": {
-    "name" : "Destan Sarpkaya",
-    "email" : "abone@destan.dev",
-    "url" : "https://destan.dev"
+    "name": "Destan Sarpkaya",
+    "email": "abone@destan.dev",
+    "url": "https://destan.dev"
   },
   "homepage": "https://github.com/grispiapp/ulak-bug-reporter",
-  "keywords": ["bug-reporting", "logger", "web-components", "webcomponents", "custom-web-component"],
+  "keywords": [
+    "bug-reporting",
+    "logger",
+    "web-components",
+    "webcomponents",
+    "custom-web-component"
+  ],
   "main": "dist/ulak.js",
   "scripts": {
     "build": "./build.js",

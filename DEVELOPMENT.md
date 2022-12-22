@@ -28,3 +28,7 @@ yarn dev
 ```
 
 then serve the `index.html` via a web server.
+
+## Sources
+
+* https://stackoverflow.com/questions/13815640/a-proper-wrapper-for-console-log-with-correct-line-number

@@ -112,6 +112,9 @@ if (typeof window !== "undefined") {
           margin-left: auto;
           margin-right: auto;
         }
+        #popup {
+          z-index: 1;
+        }
         </style>
         <screenshot-button></screenshot-button>
         <button id="actionBtn"></button>

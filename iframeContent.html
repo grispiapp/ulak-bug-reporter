@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bug Report Button Demo</title>
+  <title>Demo Iframe</title>
   <script type="module" src="dist/ulak.js"></script>
 </head>
 <body>
@@ -62,14 +62,10 @@
   - some German motherfucker
 </blockquote>
 
-<iframe src="iframeContent.html"></iframe>
-
 <hr>
 
 <h2>Epilogue</h2>
 <p>From the philosophies expressed (poorly) above, <a href="http://txti.es">txti</a> was created. You should try it today to make your own motherfucking websites.</p>
-
-<bug-report-button send-timeout="20000" text="Hata Bildir"></bug-report-button>
 </body>
 </html>
 
@@ -83,7 +79,7 @@
     const randomIndex = Math.floor(Math.random() * sentences.length);
     const level = Math.floor(Math.random() * 7);
     const obj = Math.floor(Math.random() * 7) % 2 === 1 ? {foo: 'bar', zee: 13, zeit: new Date()} : undefined;
-    const message = sentences[randomIndex];
+    const message = 'From iframe ' + sentences[randomIndex];
     switch (level) {
       case 0: obj ? console.trace   (message, obj) : console.trace   (message);break;
       case 1: obj ? console.debug   (message, obj) : console.debug   (message);break;

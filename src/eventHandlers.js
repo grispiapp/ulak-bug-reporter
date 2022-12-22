@@ -1,12 +1,11 @@
 import {IS_SSR} from "./isSSR";
-import {PREPARE_PAYLOAD_REQUEST, RETRIEVE_PAYLOAD_REQUEST, RETRIEVE_PAYLOAD_RESPONSE} from "./eventNames";
-import {preparePayload, getPayload} from "./preparePayload";
-import {payloadRetrieved, preparePayloadForIframes} from "./payloadsFromIframes";
+import {RETRIEVE_PAYLOAD_REQUEST, RETRIEVE_PAYLOAD_RESPONSE} from "./eventNames";
+import {payloadRetrieved} from "./payloadsFromIframes";
 import isDebugEnabled from "./isDebugEnabled";
 import BugReportButton from "./bug-report-button/bug-report-button";
 import send from "./logSender";
-
-const CONSOLE_LABEL = "Ulak";
+import {CONSOLE_LABEL} from "./config";
+import {generatePayload, generatePayloadOnlyForThisPage} from "./generatePayload";
 
 function sendDoneCallback(success, message) {
 	window.dispatchEvent(new CustomEvent(BugReportButton.SENDING_DONE_EVENT_NAME, {detail: {success, message}}));
@@ -18,25 +17,20 @@ export default function registerEventHandlers() {
 	}
 
 	window.addEventListener(BugReportButton.SEND_EVENT_NAME, evt => {
-
-		preparePayloadForIframes();
-		preparePayload(evt.detail.screenshot, evt.detail.message)
-			.then(() => {
-				send(sendDoneCallback);
-			});
+		generatePayload(evt.detail.screenshot, evt.detail.message)
+			.then(formData => send(sendDoneCallback, formData));
 	});
 
 	isDebugEnabled() && console.debug(CONSOLE_LABEL, 'Registering message handler.');
 	window.addEventListener("message", async (e) => {
-		const origin = e.origin;
-		const source = e.source;
-		const eventData = e.data;
-
 		if (ignoreEvent(e)) {
 			return;
 		}
 
-		if (isNotTrusted(origin)) {
+		const {origin, source} = e;
+		const eventData = e.data;
+
+		if (!isTrusted(origin)) {
 			isDebugEnabled() && console.debug(CONSOLE_LABEL, `Event from '${origin}' is not trusted, ignoring...`);
 			return;
 		}
@@ -50,16 +44,12 @@ export default function registerEventHandlers() {
 		isDebugEnabled() && console.debug(CONSOLE_LABEL, 'eventHandlers', window.location.href, eventData.type, eventData.data);
 
 		switch (type) {
-			case PREPARE_PAYLOAD_REQUEST: {
-				preparePayload();
-				break;
-			}
 			case RETRIEVE_PAYLOAD_REQUEST: {
 				const response = {
 					type: RETRIEVE_PAYLOAD_RESPONSE,
-					payload: await getPayload()
+					payload: generatePayloadOnlyForThisPage()
 				};
-				console.log('response.payload.screenshot', response.payload.screenshot)
+				console.debug(CONSOLE_LABEL, 'Sending RETRIEVE_PAYLOAD_RESPONSE', response);
 				source.postMessage(response, origin);
 				break;
 			}
@@ -68,14 +58,14 @@ export default function registerEventHandlers() {
 				break;
 			}
 			default:
-				isDebugEnabled() && console.debug(CONSOLE_LABEL, `Invalid event type: '${type}'.`);
+				console.warn(CONSOLE_LABEL, `Invalid event type: '${type}'.`, e);
 		}
 	});
 }
 
-function isNotTrusted(origin) { // @customizationCandidate: function isTrusted(origin: string): boolean
+function isTrusted(origin) {
 	isDebugEnabled() && console.debug(CONSOLE_LABEL, `Checking if '${origin}' is trusted or not.`);
-	return false; // FIXME
+	return true; // FIXME
 }
 
 // @customizationCandidate: function ignoreEvent(e: MessageEvent): boolean
